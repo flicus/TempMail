@@ -29,6 +29,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.tempmail.TempMailClient;
 import io.vertx.tempmail.TempMailOptions;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -48,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TempMailClientImpl implements TempMailClient {
 
     private static final String getMessagesURL = "http://api.temp-mail.ru/request/mail/id/%s/format/json";
-    private static final String getDomainsURL = "http://api.temp-mail.ru/request/domains/";
+    private static final String getDomainsURL = "http://api.temp-mail.ru/request/domains/format/json";
     private static final String getSourcesURL = "http://api.temp-mail.ru/request/source/id/%s/format/json";
     private static final String deleteMessageURL = "http://api.temp-mail.ru/request/delete/id/%s/";
 
@@ -65,19 +66,18 @@ public class TempMailClientImpl implements TempMailClient {
     }
 
     @Override
-    public void getSupportedDomains(Handler<AsyncResult<JsonArray>> handler) {
+    public void getSupportedDomains(Handler<AsyncResult<JsonObject>> handler) {
         doGenericRequest(getDomainsURL, handler);
     }
 
     @Override
-    public void getMessages(String email, Handler<AsyncResult<JsonArray>> handler) {
+    public void getMessages(String email, Handler<AsyncResult<JsonObject>> handler) {
         doGenericRequest(String.format(getMessagesURL, DigestUtils.md5Hex(email)), handler);
     }
 
     @Override
-    public void createMailListener(String email, Handler<AsyncResult<JsonArray>> handler) {
-        Wrapper w = new Wrapper(email, handler);
-        handlers.put(email, w);
+    public void createMailListener(String email, Handler<AsyncResult<JsonObject>> handler) {
+        handlers.put(email, new Wrapper(email, handler));
     }
 
     @Override
@@ -86,16 +86,16 @@ public class TempMailClientImpl implements TempMailClient {
     }
 
     @Override
-    public void getSources(String email, Handler<AsyncResult<JsonArray>> handler) {
+    public void getSources(String email, Handler<AsyncResult<JsonObject>> handler) {
         doGenericRequest(String.format(getSourcesURL, DigestUtils.md5Hex(email)), handler);
     }
 
     @Override
-    public void deleteMessage(String messageId, Handler<AsyncResult<JsonArray>> handler) {
-        doGenericRequest(String.format(getSourcesURL, messageId), handler);
+    public void deleteMessage(String messageId, Handler<AsyncResult<JsonObject>> handler) {
+        doGenericRequest(String.format(deleteMessageURL, messageId), handler);
     }
 
-    private void doGenericRequest(String url, Handler<AsyncResult<JsonArray>> handler) {
+    private void doGenericRequest(String url, Handler<AsyncResult<JsonObject>> handler) {
         vertx.executeBlocking(future -> {
             HttpGet httpGet = new HttpGet(url);
             if (options.getProxy() != null) {
@@ -108,17 +108,19 @@ public class TempMailClientImpl implements TempMailClient {
                     HttpEntity ht = response.getEntity();
                     BufferedHttpEntity buf = new BufferedHttpEntity(ht);
                     String responseContent = EntityUtils.toString(buf, "UTF-8");
-                    JsonArray jsonObject = new JsonArray(responseContent);
+                    JsonArray jsonArray = new JsonArray(responseContent);
+                    JsonObject jsonObject = new JsonObject();
+                    jsonObject.put("result", jsonArray);
                     future.complete(jsonObject);
                 }
             } catch (Exception e) {
                 future.fail(e);
             }
         }, res -> {
-            handler.handle(new AsyncResult<JsonArray>() {
+            handler.handle(new AsyncResult<JsonObject>() {
                 @Override
-                public JsonArray result() {
-                    return res.succeeded() ? (JsonArray) res.result() : null;
+                public JsonObject result() {
+                    return res.succeeded() ? (JsonObject) res.result() : null;
                 }
 
                 @Override
@@ -146,12 +148,12 @@ public class TempMailClientImpl implements TempMailClient {
             for (Map.Entry<String, Wrapper> entry : handlers.entrySet()) {
                 getMessages(entry.getKey(), res -> {
                     if (res.succeeded()) {
-                        JsonArray messages = res.result();
+                        JsonObject messages = res.result();
                         if (messages != null) {
                             if (messages.size() > entry.getValue().getCount()) {
-                                entry.getValue().getHandler().handle(new AsyncResult<JsonArray>() {
+                                entry.getValue().getHandler().handle(new AsyncResult<JsonObject>() {
                                     @Override
-                                    public JsonArray result() {
+                                    public JsonObject result() {
                                         return messages;
                                     }
 
@@ -182,13 +184,13 @@ public class TempMailClientImpl implements TempMailClient {
     private class Wrapper {
         private String email;
         private long count;
-        private Handler<AsyncResult<JsonArray>> handler;
+        private Handler<AsyncResult<JsonObject>> handler;
 
         public Wrapper() {
             this.count = 0;
         }
 
-        public Wrapper(String email, Handler<AsyncResult<JsonArray>> handler) {
+        public Wrapper(String email, Handler<AsyncResult<JsonObject>> handler) {
             this.email = email;
             this.handler = handler;
             this.count = 0;
@@ -210,11 +212,11 @@ public class TempMailClientImpl implements TempMailClient {
             this.count = count;
         }
 
-        public Handler<AsyncResult<JsonArray>> getHandler() {
+        public Handler<AsyncResult<JsonObject>> getHandler() {
             return handler;
         }
 
-        public void setHandler(Handler<AsyncResult<JsonArray>> handler) {
+        public void setHandler(Handler<AsyncResult<JsonObject>> handler) {
             this.handler = handler;
         }
 

@@ -29,7 +29,7 @@ package io.vertx.tempmail;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.tempmail.impl.TempMailClientImpl;
 
 public interface TempMailClient {
@@ -45,19 +45,19 @@ public interface TempMailClient {
     /**
      * @param handler
      */
-    void getSupportedDomains(Handler<AsyncResult<JsonArray>> handler);
+    void getSupportedDomains(Handler<AsyncResult<JsonObject>> handler);
 
     /**
      * @param email
      * @param handler
      */
-    void getMessages(String email, Handler<AsyncResult<JsonArray>> handler);
+    void getMessages(String email, Handler<AsyncResult<JsonObject>> handler);
 
     /**
      * @param email
      * @param handler
      */
-    void createMailListener(String email, Handler<AsyncResult<JsonArray>> handler);
+    void createMailListener(String email, Handler<AsyncResult<JsonObject>> handler);
 
     /**
      * @param email
@@ -69,11 +69,11 @@ public interface TempMailClient {
      * @param email
      * @param handler
      */
-    void getSources(String email, Handler<AsyncResult<JsonArray>> handler);
+    void getSources(String email, Handler<AsyncResult<JsonObject>> handler);
 
     /**
      * @param id
      * @param handler
      */
-    void deleteMessage(String messageId, Handler<AsyncResult<JsonArray>> handler);
+    void deleteMessage(String messageId, Handler<AsyncResult<JsonObject>> handler);
 }
