@@ -42,6 +42,7 @@ import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TempMailClientImpl implements TempMailClient {
+
+    private static final Logger log = Logger.getLogger(TempMailClientImpl.class);
 
     private static final String getMessagesURL = "http://api.temp-mail.ru/request/mail/id/%s/format/json";
     private static final String getDomainsURL = "http://api.temp-mail.ru/request/domains/format/json";
@@ -69,16 +72,19 @@ public class TempMailClientImpl implements TempMailClient {
 
     @Override
     public void getSupportedDomains(Handler<AsyncResult<JsonObject>> handler) {
+        log.debug("getSupportedDomains::");
         doGenericRequest(getDomainsURL, handler);
     }
 
     @Override
     public void getMessages(String email, Handler<AsyncResult<JsonObject>> handler) {
+        log.debug("getMessages::" + email);
         doGenericRequest(String.format(getMessagesURL, DigestUtils.md5Hex(email)), handler);
     }
 
     @Override
     public void addMailListener(String email, Handler<AsyncResult<JsonObject>> handler) {
+        log.debug("addMailListener::" + email);
         Wrapper wrapper = handlers.get(email);
         if (wrapper == null) {
             wrapper = new Wrapper(email, handler);
@@ -90,16 +96,19 @@ public class TempMailClientImpl implements TempMailClient {
 
     @Override
     public void removeMailListener(String email) {
+        log.debug("removeMailListener::" + email);
         handlers.remove(email);
     }
 
     @Override
     public void getSources(String email, Handler<AsyncResult<JsonObject>> handler) {
+        log.debug("getSources::" + email);
         doGenericRequest(String.format(getSourcesURL, DigestUtils.md5Hex(email)), handler);
     }
 
     @Override
     public void deleteMessage(String messageId, Handler<AsyncResult<JsonObject>> handler) {
+        log.debug("deleteMessage::" + messageId);
         doGenericRequest(String.format(deleteMessageURL, messageId), handler);
     }
 
@@ -122,6 +131,7 @@ public class TempMailClientImpl implements TempMailClient {
                     future.complete(jsonObject);
                 }
             } catch (Exception e) {
+                log.warn(e, e);
                 future.fail(e);
             }
         }, res -> {
@@ -153,47 +163,55 @@ public class TempMailClientImpl implements TempMailClient {
 
         @Override
         public void handle(Long event) {
+            log.debug("MailChecker::handle::" + event);
             for (Map.Entry<String, Wrapper> entry : handlers.entrySet()) {
                 getMessages(entry.getKey(), res -> {
                     if (res.succeeded()) {
-                        JsonObject messages = res.result();
-                        if (messages != null) {
-                            if (messages.size() > entry.getValue().getCount()) {
-                                JsonArray newMessages = new JsonArray();
-                                int start = messages.size() - entry.getValue().getCount();
-                                JsonArray allMessages = messages.getJsonArray("result");
-                                for (int i = start; i <= messages.size(); i++) {
-                                    newMessages.add(allMessages.getValue(i));
+                        try {
+                            JsonObject result = res.result();
+                            if (result != null) {
+                                JsonArray allMessages = result.getJsonArray("result");
+                                log.debug("MailChecker::handle::allMessages" + allMessages);
+                                if (allMessages.size() > entry.getValue().getCount()) {
+                                    JsonArray newMessages = new JsonArray();
+                                    int start = allMessages.size() - entry.getValue().getCount();
+                                    for (int i = start; i <= allMessages.size(); i++) {
+                                        newMessages.add(allMessages.getValue(i - 1));
+                                    }
+                                    result.put("result", newMessages);
+                                    result.put("email", entry.getKey());
+                                    log.debug("MailChecker::handle::result" + result);
+                                    for (Handler<AsyncResult<JsonObject>> handler : entry.getValue().getHandlers()) {
+                                        handler.handle(new AsyncResult<JsonObject>() {
+                                            @Override
+                                            public JsonObject result() {
+                                                return result;
+                                            }
+
+                                            @Override
+                                            public Throwable cause() {
+                                                return null;
+                                            }
+
+                                            @Override
+                                            public boolean succeeded() {
+                                                return true;
+                                            }
+
+                                            @Override
+                                            public boolean failed() {
+                                                return false;
+                                            }
+                                        });
+                                    }
                                 }
-                                messages.put("result", newMessages);
-                                messages.put("email", entry.getKey());
-                                for (Handler<AsyncResult<JsonObject>> handler : entry.getValue().getHandlers()) {
-                                    handler.handle(new AsyncResult<JsonObject>() {
-                                        @Override
-                                        public JsonObject result() {
-                                            return messages;
-                                        }
-
-                                        @Override
-                                        public Throwable cause() {
-                                            return null;
-                                        }
-
-                                        @Override
-                                        public boolean succeeded() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        public boolean failed() {
-                                            return false;
-                                        }
-                                    });
-                                }
+                                entry.getValue().setCount(allMessages.size());
                             }
-                            entry.getValue().setCount(messages.size());
+                        } catch (Exception e) {
+                            log.warn(e, e);
                         }
                     }
+                    vertx.setTimer(options.getCheckPeriod(), new MailChecker());
                 });
             }
         }
