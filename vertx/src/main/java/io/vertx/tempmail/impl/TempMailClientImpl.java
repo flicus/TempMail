@@ -43,6 +43,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,8 +78,14 @@ public class TempMailClientImpl implements TempMailClient {
     }
 
     @Override
-    public void createMailListener(String email, Handler<AsyncResult<JsonObject>> handler) {
-        handlers.put(email, new Wrapper(email, handler));
+    public void addMailListener(String email, Handler<AsyncResult<JsonObject>> handler) {
+        Wrapper wrapper = handlers.get(email);
+        if (wrapper == null) {
+            wrapper = new Wrapper(email, handler);
+            handlers.put(email, wrapper);
+        } else {
+            wrapper.addHandler(handler);
+        }
     }
 
     @Override
@@ -151,27 +159,37 @@ public class TempMailClientImpl implements TempMailClient {
                         JsonObject messages = res.result();
                         if (messages != null) {
                             if (messages.size() > entry.getValue().getCount()) {
-                                entry.getValue().getHandler().handle(new AsyncResult<JsonObject>() {
-                                    @Override
-                                    public JsonObject result() {
-                                        return messages;
-                                    }
+                                JsonArray newMessages = new JsonArray();
+                                int start = messages.size() - entry.getValue().getCount();
+                                JsonArray allMessages = messages.getJsonArray("result");
+                                for (int i = start; i <= messages.size(); i++) {
+                                    newMessages.add(allMessages.getValue(i));
+                                }
+                                messages.put("result", newMessages);
+                                messages.put("email", entry.getKey());
+                                for (Handler<AsyncResult<JsonObject>> handler : entry.getValue().getHandlers()) {
+                                    handler.handle(new AsyncResult<JsonObject>() {
+                                        @Override
+                                        public JsonObject result() {
+                                            return messages;
+                                        }
 
-                                    @Override
-                                    public Throwable cause() {
-                                        return null;
-                                    }
+                                        @Override
+                                        public Throwable cause() {
+                                            return null;
+                                        }
 
-                                    @Override
-                                    public boolean succeeded() {
-                                        return true;
-                                    }
+                                        @Override
+                                        public boolean succeeded() {
+                                            return true;
+                                        }
 
-                                    @Override
-                                    public boolean failed() {
-                                        return false;
-                                    }
-                                });
+                                        @Override
+                                        public boolean failed() {
+                                            return false;
+                                        }
+                                    });
+                                }
                             }
                             entry.getValue().setCount(messages.size());
                         }
@@ -183,8 +201,8 @@ public class TempMailClientImpl implements TempMailClient {
 
     private class Wrapper {
         private String email;
-        private long count;
-        private Handler<AsyncResult<JsonObject>> handler;
+        private int count;
+        private List<Handler<AsyncResult<JsonObject>>> handlers = new ArrayList<>();
 
         public Wrapper() {
             this.count = 0;
@@ -192,7 +210,7 @@ public class TempMailClientImpl implements TempMailClient {
 
         public Wrapper(String email, Handler<AsyncResult<JsonObject>> handler) {
             this.email = email;
-            this.handler = handler;
+            this.handlers.add(handler);
             this.count = 0;
         }
 
@@ -204,20 +222,20 @@ public class TempMailClientImpl implements TempMailClient {
             this.email = email;
         }
 
-        public long getCount() {
+        public int getCount() {
             return count;
         }
 
-        public void setCount(long count) {
+        public void setCount(int count) {
             this.count = count;
         }
 
-        public Handler<AsyncResult<JsonObject>> getHandler() {
-            return handler;
+        public List<Handler<AsyncResult<JsonObject>>> getHandlers() {
+            return handlers;
         }
 
-        public void setHandler(Handler<AsyncResult<JsonObject>> handler) {
-            this.handler = handler;
+        public void addHandler(Handler<AsyncResult<JsonObject>> handler) {
+            this.handlers.add(handler);
         }
 
         @Override
@@ -225,7 +243,6 @@ public class TempMailClientImpl implements TempMailClient {
             return "Wrapper{" +
                     "email='" + email + '\'' +
                     ", count=" + count +
-                    ", handler=" + handler +
                     '}';
         }
     }

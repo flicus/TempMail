@@ -57,7 +57,7 @@ public interface TempMailClient {
      * @param email
      * @param handler
      */
-    void createMailListener(String email, Handler<AsyncResult<JsonObject>> handler);
+    void addMailListener(String email, Handler<AsyncResult<JsonObject>> handler);
 
     /**
      * @param email
