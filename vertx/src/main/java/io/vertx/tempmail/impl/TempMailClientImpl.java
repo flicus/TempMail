@@ -171,6 +171,8 @@ public class TempMailClientImpl implements TempMailClient {
 
         @Override
         public void handle(Long event) {
+
+
             log.debug("MailChecker::handle::" + event);
             for (Map.Entry<String, Wrapper> entry : handlers.entrySet()) {
                 getMessages(entry.getKey(), res -> {
@@ -222,6 +224,8 @@ public class TempMailClientImpl implements TempMailClient {
                     vertx.setTimer(options.getCheckPeriod(), new MailChecker());
                 });
             }
+
+
         }
     }
 

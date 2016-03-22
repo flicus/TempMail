@@ -1,0 +1,5 @@
+# TempMail
+
+TempMail library standalone
+
+

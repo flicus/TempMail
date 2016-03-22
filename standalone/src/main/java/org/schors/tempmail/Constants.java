@@ -23,28 +23,16 @@
  *
  */
 
-group 'schors'
-version '1.0'
+package org.schors.tempmail;
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "org.apache.httpcomponents:httpclient:4.5.1"
-        testCompile "junit:junit:4.12"
-    }
-
+public interface Constants {
+    String MAIL_UNIQUE_ID = "mail_unique_id";
+    String MAIL_ID = "mail_id";
+    String MAIL_ADDRESS_ID = "mail_address_id";
+    String MAIL_FROM = "mail_from";
+    String MAIL_SUBJECT = "mail_subject";
+    String MAIL_PREVIEW = "mail_preview";
+    String MAIL_TEXT_ONLY = "mail_text_only";
+    String MAIL_TEXT = "mail_text";
+    String MAIL_HTML = "mail_html";
 }
-
-
-
-
-
-
-

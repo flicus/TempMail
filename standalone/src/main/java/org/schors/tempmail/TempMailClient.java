@@ -23,28 +23,39 @@
  *
  */
 
-group 'schors'
-version '1.0'
+package org.schors.tempmail;
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
+import org.json.JSONObject;
+import org.schors.tempmail.impl.TempMailClientImpl;
 
-    repositories {
-        mavenCentral()
+public interface TempMailClient {
+
+    static TempMailClient create() {
+        return new TempMailClientImpl(new TempMailOptions());
     }
 
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "org.apache.httpcomponents:httpclient:4.5.1"
-        testCompile "junit:junit:4.12"
+    static TempMailClient create(TempMailOptions options) {
+        return new TempMailClientImpl(options);
     }
 
+
+    JSONObject getSupportedDomains();
+
+    void getSupportedDomains(Handler<Result<JSONObject>> handler);
+
+    JSONObject getMessages(String email);
+
+    void getMessages(String email, Handler<Result<JSONObject>> handler);
+
+    void addMailListener(String email, Handler<Result<JSONObject>> handler);
+
+    void removeMailListener(String email);
+
+    JSONObject getSources(String email);
+
+    void getSources(String email, Handler<Result<JSONObject>> handler);
+
+    JSONObject deleteMessage(String messageId);
+
+    void deleteMessage(String messageId, Handler<Result<JSONObject>> handler);
 }
-
-
-
-
-
-
-

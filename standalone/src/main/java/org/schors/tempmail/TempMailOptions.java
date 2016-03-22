@@ -23,28 +23,53 @@
  *
  */
 
-group 'schors'
-version '1.0'
+package org.schors.tempmail;
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
+import org.apache.http.HttpHost;
 
-    repositories {
-        mavenCentral()
+public class TempMailOptions {
+
+    private Long checkPeriod;
+    private String proxyHost;
+    private Integer proxyPort;
+    private String proxyType;
+
+    public TempMailOptions() {
+        this.checkPeriod = new Long(30000);
     }
 
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "org.apache.httpcomponents:httpclient:4.5.1"
-        testCompile "junit:junit:4.12"
+    public TempMailOptions setProxy(String host, Integer port, String type) {
+        this.proxyHost = host;
+        this.proxyPort = port;
+        this.proxyType = type;
+        return this;
     }
 
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public Integer getProxyPort() {
+        return proxyPort;
+    }
+
+    public String getProxyType() {
+        return proxyType;
+    }
+
+    public HttpHost getProxy() {
+        if (getProxyHost() != null && getProxyPort() != null && getProxyType() != null) {
+            return new HttpHost(getProxyHost(), getProxyPort(), getProxyType());
+        }
+        return null;
+    }
+
+    public Long getCheckPeriod() {
+        return checkPeriod;
+    }
+
+    public TempMailOptions setCheckPeriod(Long period) {
+        this.checkPeriod = period;
+        return this;
+    }
 }
-
-
-
-
-
-
-
