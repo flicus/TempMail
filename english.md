@@ -72,7 +72,7 @@ For this you need to register listener which will be called every time you recei
 client.addMailListener("pipka@shotmail.ru", event -> {
     if (event.success()) {
         JSONArray newEmails = event.result().getJSONArray("result");
-        if (newEmails != null && newEmails..length() > 0) {
+        if (newEmails != null && newEmails.length() > 0) {
             //handle new emails
         }
     }
