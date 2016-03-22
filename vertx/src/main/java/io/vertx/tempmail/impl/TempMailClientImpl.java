@@ -64,6 +64,10 @@ public class TempMailClientImpl implements TempMailClient {
     private Vertx vertx;
     private TempMailOptions options;
 
+    public TempMailClientImpl(Vertx vertx) {
+        this(vertx, new TempMailOptions());
+    }
+
     public TempMailClientImpl(Vertx vertx, TempMailOptions options) {
         this.vertx = vertx;
         this.options = options;
