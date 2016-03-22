@@ -119,8 +119,8 @@ public class TempMailClientImpl implements TempMailClient {
     private void doGenericRequest(String url, Handler<AsyncResult<JsonObject>> handler) {
         vertx.executeBlocking(future -> {
             HttpGet httpGet = new HttpGet(url);
-            if (TempMailClientImpl.this.options.getProxy() != null) {
-                RequestConfig response = RequestConfig.custom().setProxy(TempMailClientImpl.this.options.getProxy()).build();
+            if (getOptions().getProxy() != null) {
+                RequestConfig response = RequestConfig.custom().setProxy(getOptions().getProxy()).build();
                 httpGet.setConfig(response);
             }
             try {
@@ -161,6 +161,10 @@ public class TempMailClientImpl implements TempMailClient {
                 }
             });
         });
+    }
+
+    private TempMailOptions getOptions() {
+        return this.options;
     }
 
     private class MailChecker implements Handler<Long> {
