@@ -1,4 +1,4 @@
-# :envelope: TempMail Java Library [![Build Status](https://travis-ci.org/flicus/TempMail.png)](https://travis-ci.org/flicus/TempMail) [![Release](https://jitpack.io/v/flicus/TempMail.svg)](https://jitpack.io/#flicus/TempMail)
+# :envelope: TempMail Java Library [![Release](https://jitpack.io/v/flicus/TempMail.svg)](https://jitpack.io/#flicus/TempMail)
 Java библиотека, реализующая [TempMail] (https://temp-mail.ru/) API для автоматизации работы с временными почтовыми ящиками  
 
 Для начала - сам сервис принимает почту на любой адрес в своих доменах. Нет необходимости регистрировать почтовый ящик, нужно просто выбрать подходящий домен и адрес ящика в домене. После этого можно слать на этот адрес почту и проверять ее при помощи API. Сервис хранит входящую почту в течении короткого времени (они у себя пишут 10 минут)

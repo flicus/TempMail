@@ -1,4 +1,4 @@
-# :envelope: TempMail Java Library [![Build Status](https://travis-ci.org/flicus/TempMail.png)](https://travis-ci.org/flicus/TempMail) [![Release](https://jitpack.io/v/flicus/TempMail.svg)](https://jitpack.io/#flicus/TempMail)
+# :envelope: TempMail Java Library [![Release](https://jitpack.io/v/flicus/TempMail.svg)](https://jitpack.io/#flicus/TempMail)
 This is a Java library, implementing [TempMail] (https://temp-mail.ru/) API for temporary e-mail boxes manipulating  
 
 First of all, the service itself accept e-mails on any address of the domains belonging to it. You do not need to do anything specific to create your own mailbox. You just need to decide which domain name you will use, and which e-mail address do you like. Then start sending e-mails on that address and check it with the API. Keep in mind, service will store e-mails only for the short period of time (they mention 10 minutes)  
