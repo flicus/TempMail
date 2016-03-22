@@ -61,7 +61,10 @@ public class TempMailOptions {
     }
 
     public HttpHost getProxy() {
-        return new HttpHost(getProxyHost(), getProxyPort(), getProxyType());
+        if (getProxyHost() != null && getProxyPort() != null && getProxyType() != null) {
+            return new HttpHost(getProxyHost(), getProxyPort(), getProxyType());
+        }
+        return null;
     }
 
     public Long getCheckPeriod() {
