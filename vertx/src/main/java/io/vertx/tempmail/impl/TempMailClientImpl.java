@@ -117,10 +117,11 @@ public class TempMailClientImpl implements TempMailClient {
     }
 
     private void doGenericRequest(String url, Handler<AsyncResult<JsonObject>> handler) {
+        final TempMailOptions opt = getOptions();
         vertx.executeBlocking(future -> {
             HttpGet httpGet = new HttpGet(url);
-            if (getOptions().getProxy() != null) {
-                RequestConfig response = RequestConfig.custom().setProxy(getOptions().getProxy()).build();
+            if (opt.getProxy() != null) {
+                RequestConfig response = RequestConfig.custom().setProxy(opt.getProxy()).build();
                 httpGet.setConfig(response);
             }
             try {
