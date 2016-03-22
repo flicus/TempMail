@@ -26,5 +26,3 @@
 rootProject.name = 'TempMail'
 include 'vertx'
 include 'standalone'
-include 'tst'
-
