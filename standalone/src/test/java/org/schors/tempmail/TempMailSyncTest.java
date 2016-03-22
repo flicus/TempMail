@@ -28,7 +28,7 @@ public class TempMailSyncTest extends TestCase {
                 System.out.print(event.result());
             }
         });
-        Thread.sleep(1000000);
+        //todo send mail and check
 
     }
 }
